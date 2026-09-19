@@ -1,4 +1,5 @@
 import os
+import random
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -6,6 +7,7 @@ from telegram.utils.request import Request
 
 
 PROXY_URL = "socks5h://127.0.0.1:10808"
+IMAGES_DIRECTORY = "images"
 
 
 def main():
@@ -25,11 +27,16 @@ def main():
         request=request,
     )
 
-    bot.send_message(
-        chat_id=telegram_channel_id,
-        text="Hello from Space Photos!",
-    )
+    image_names = os.listdir(IMAGES_DIRECTORY)
+    image_name = random.choice(image_names)
+    image_path = os.path.join(IMAGES_DIRECTORY, image_name)
+
+    with open(image_path, "rb") as photo:
+        bot.send_photo(
+            chat_id=telegram_channel_id,
+            photo=photo,
+        )
 
 
 if __name__ == "__main__":
-    main()  
+    main()
