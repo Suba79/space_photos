@@ -8,7 +8,11 @@ def download_image(url, filepath):
         "User-Agent": "space-photos-training-project/1.0"
     }
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=30,
+    )
     response.raise_for_status()
 
     with open(filepath, "wb") as file:

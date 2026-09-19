@@ -1,5 +1,35 @@
+import os
+import time
+
 import requests
 
+
+USER_AGENT = "space-photos-training-project/1.0"
+
+PROXIES = {
+    "http": "socks5h://127.0.0.1:10808",
+    "https": "socks5h://127.0.0.1:10808",
+}
+
+
+def download_image(url, filepath, proxies):
+    headers = {
+        "User-Agent": USER_AGENT,
+    }
+
+    response = requests.get(
+        url,
+        proxies=proxies,
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    with open(filepath, "wb") as file:
+        file.write(response.content)
+
+
+os.makedirs("images", exist_ok=True)
 
 api_url = "https://commons.wikimedia.org/w/api.php"
 
@@ -10,35 +40,43 @@ params = {
     "gsrnamespace": 6,
     "gsrlimit": 10,
     "prop": "imageinfo",
-    "iiprop": "url",
+    "iiprop": "url|mime",
     "format": "json",
 }
 
-proxies = {
-    "http": "socks5h://127.0.0.1:10808",
-    "https": "socks5h://127.0.0.1:10808",
-}
-
 headers = {
-    "User-Agent": "space-photos-training-project/1.0"
+    "User-Agent": USER_AGENT,
 }
 
 response = requests.get(
     api_url,
     params=params,
-    proxies=proxies,
+    proxies=PROXIES,
     headers=headers,
+    timeout=30,
 )
 response.raise_for_status()
 
-response_data = response.json()
-
-pages = response_data["query"]["pages"].values()
+pages = response.json()["query"]["pages"].values()
 
 image_urls = []
 
 for page in pages:
-    image_url = page["imageinfo"][0]["url"]
-    image_urls.append(image_url)
+    image_info = page["imageinfo"][0]
 
-print(image_urls)
+    if image_info["mime"].startswith("image/"):
+        image_urls.append(image_info["url"])
+
+for image_number, image_url in enumerate(image_urls, start=1):
+    image_path = f"images/spacex_{image_number}.jpg"
+
+    if os.path.exists(image_path):
+        continue
+
+    download_image(
+        image_url,
+        image_path,
+        PROXIES,
+    )
+
+    time.sleep(5)
