@@ -12,14 +12,14 @@ PROXIES = {
 }
 
 
-def download_image(url, filepath, proxies):
+def download_image(url, filepath):
     headers = {
         "User-Agent": USER_AGENT,
     }
 
     response = requests.get(
         url,
-        proxies=proxies,
+        proxies=PROXIES,
         headers=headers,
         timeout=30,
     )
@@ -68,15 +68,10 @@ for page in pages:
         image_urls.append(image_info["url"])
 
 for image_number, image_url in enumerate(image_urls, start=1):
-    image_path = f"images/spacex_{image_number}.jpg"
+    image_path = f"images/spacex{image_number}.jpg"
 
     if os.path.exists(image_path):
         continue
 
-    download_image(
-        image_url,
-        image_path,
-        PROXIES,
-    )
-
+    download_image(image_url, image_path)
     time.sleep(5)
