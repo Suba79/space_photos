@@ -3,10 +3,8 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from utils import get_file_extension
+from utils import download_image, get_file_extension
 
-
-USER_AGENT = "space-photos-training-project/1.0"
 
 PROXIES = {
     "http": "socks5h://127.0.0.1:10808",
@@ -14,23 +12,6 @@ PROXIES = {
 }
 
 NASA_APOD_URL = "https://api.nasa.gov/planetary/apod"
-
-
-def download_image(url, filepath):
-    headers = {
-        "User-Agent": USER_AGENT,
-    }
-
-    response = requests.get(
-        url,
-        proxies=PROXIES,
-        headers=headers,
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    with open(filepath, "wb") as file:
-        file.write(response.content)
 
 
 def get_apod_images(api_key, count):
@@ -47,6 +28,7 @@ def get_apod_images(api_key, count):
             timeout=30,
         )
         response.raise_for_status()
+
     except requests.exceptions.RequestException:
         fallback_params = {
             "api_key": "DEMO_KEY",
@@ -85,13 +67,25 @@ def fetch_nasa_apod(api_key, count=40):
 
         image_path = f"images/nasa_apod_{image_number}{extension}"
 
-        download_image(image_url, image_path)
+        try:
+            download_image(
+                image_url,
+                image_path,
+                proxies=PROXIES,
+            )
+        except requests.exceptions.RequestException:
+            continue
 
         image_number += 1
 
 
-load_dotenv()
+def main():
+    load_dotenv()
 
-nasa_api_key = os.environ["NASA_API_KEY"]
+    nasa_api_key = os.environ["NASA_API_KEY"]
 
-fetch_nasa_apod(nasa_api_key)
+    fetch_nasa_apod(nasa_api_key)
+
+
+if __name__ == "__main__":
+    main()

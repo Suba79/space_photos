@@ -4,8 +4,8 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
+from utils import download_image
 
-USER_AGENT = "space-photos-training-project/1.0"
 
 PROXIES = {
     "http": "socks5h://127.0.0.1:10808",
@@ -13,23 +13,6 @@ PROXIES = {
 }
 
 NASA_EPIC_API_URL = "https://api.nasa.gov/EPIC/api/natural"
-
-
-def download_image(url, filepath):
-    headers = {
-        "User-Agent": USER_AGENT,
-    }
-
-    response = requests.get(
-        url,
-        proxies=PROXIES,
-        headers=headers,
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    with open(filepath, "wb") as file:
-        file.write(response.content)
 
 
 def get_epic_images(api_key):
@@ -84,23 +67,28 @@ def fetch_nasa_epic(api_key, images_count=10):
             f"{image_name}.png"
         )
 
-        params = {
-            "api_key": working_api_key,
-        }
-
-        response = requests.Request(
+        prepared_request = requests.Request(
             "GET",
             image_url,
-            params=params,
+            params={"api_key": working_api_key},
         ).prepare()
 
         image_path = f"images/nasa_epic_{image_number}.png"
 
-        download_image(response.url, image_path)
+        download_image(
+            prepared_request.url,
+            image_path,
+            proxies=PROXIES,
+        )
 
 
-load_dotenv()
+def main():
+    load_dotenv()
 
-nasa_api_key = os.environ["NASA_API_KEY"]
+    nasa_api_key = os.environ["NASA_API_KEY"]
 
-fetch_nasa_epic(nasa_api_key)
+    fetch_nasa_epic(nasa_api_key)
+
+
+if __name__ == "__main__":
+    main()

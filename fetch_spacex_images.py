@@ -1,43 +1,30 @@
+import argparse
 import os
 import time
 
 import requests
 
+from utils import download_image
 
-USER_AGENT = "space-photos-training-project/1.0"
 
 PROXIES = {
     "http": "socks5h://127.0.0.1:10808",
     "https": "socks5h://127.0.0.1:10808",
 }
 
+USER_AGENT = "space-photos-training-project/1.0"
+WIKIMEDIA_API_URL = "https://commons.wikimedia.org/w/api.php"
 
-def download_image(url, filepath):
-    headers = {
-        "User-Agent": USER_AGENT,
-    }
-
-    response = requests.get(
-        url,
-        proxies=PROXIES,
-        headers=headers,
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    with open(filepath, "wb") as file:
-        file.write(response.content)
+DEFAULT_SEARCH_QUERY = "Starlink 17-38"
 
 
-def fetch_spacex_last_launch():
+def fetch_spacex_images(search_query):
     os.makedirs("images", exist_ok=True)
-
-    api_url = "https://commons.wikimedia.org/w/api.php"
 
     params = {
         "action": "query",
         "generator": "search",
-        "gsrsearch": "Starlink 17-38",
+        "gsrsearch": search_query,
         "gsrnamespace": 6,
         "gsrlimit": 10,
         "prop": "imageinfo",
@@ -50,7 +37,7 @@ def fetch_spacex_last_launch():
     }
 
     response = requests.get(
-        api_url,
+        WIKIMEDIA_API_URL,
         params=params,
         proxies=PROXIES,
         headers=headers,
@@ -71,8 +58,31 @@ def fetch_spacex_last_launch():
     for image_number, image_url in enumerate(image_urls, start=1):
         image_path = f"images/spacex{image_number}.jpg"
 
-        download_image(image_url, image_path)
+        download_image(
+            image_url,
+            image_path,
+            proxies=PROXIES,
+        )
+
         time.sleep(5)
 
 
-fetch_spacex_last_launch()
+def main():
+    parser = argparse.ArgumentParser(
+        description="Download SpaceX launch images from Wikimedia Commons."
+    )
+
+    parser.add_argument(
+        "search_query",
+        nargs="?",
+        default=DEFAULT_SEARCH_QUERY,
+        help="Search query for Wikimedia Commons.",
+    )
+
+    args = parser.parse_args()
+
+    fetch_spacex_images(args.search_query)
+
+
+if __name__ == "__main__":
+    main()
