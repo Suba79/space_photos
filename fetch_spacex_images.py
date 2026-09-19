@@ -29,49 +29,50 @@ def download_image(url, filepath):
         file.write(response.content)
 
 
-os.makedirs("images", exist_ok=True)
+def fetch_spacex_last_launch():
+    os.makedirs("images", exist_ok=True)
 
-api_url = "https://commons.wikimedia.org/w/api.php"
+    api_url = "https://commons.wikimedia.org/w/api.php"
 
-params = {
-    "action": "query",
-    "generator": "search",
-    "gsrsearch": "Starlink 17-38",
-    "gsrnamespace": 6,
-    "gsrlimit": 10,
-    "prop": "imageinfo",
-    "iiprop": "url|mime",
-    "format": "json",
-}
+    params = {
+        "action": "query",
+        "generator": "search",
+        "gsrsearch": "Starlink 17-38",
+        "gsrnamespace": 6,
+        "gsrlimit": 10,
+        "prop": "imageinfo",
+        "iiprop": "url|mime",
+        "format": "json",
+    }
 
-headers = {
-    "User-Agent": USER_AGENT,
-}
+    headers = {
+        "User-Agent": USER_AGENT,
+    }
 
-response = requests.get(
-    api_url,
-    params=params,
-    proxies=PROXIES,
-    headers=headers,
-    timeout=30,
-)
-response.raise_for_status()
+    response = requests.get(
+        api_url,
+        params=params,
+        proxies=PROXIES,
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
 
-pages = response.json()["query"]["pages"].values()
+    pages = response.json()["query"]["pages"].values()
 
-image_urls = []
+    image_urls = []
 
-for page in pages:
-    image_info = page["imageinfo"][0]
+    for page in pages:
+        image_info = page["imageinfo"][0]
 
-    if image_info["mime"].startswith("image/"):
-        image_urls.append(image_info["url"])
+        if image_info["mime"].startswith("image/"):
+            image_urls.append(image_info["url"])
 
-for image_number, image_url in enumerate(image_urls, start=1):
-    image_path = f"images/spacex{image_number}.jpg"
+    for image_number, image_url in enumerate(image_urls, start=1):
+        image_path = f"images/spacex{image_number}.jpg"
 
-    if os.path.exists(image_path):
-        continue
+        download_image(image_url, image_path)
+        time.sleep(5)
 
-    download_image(image_url, image_path)
-    time.sleep(5)
+
+fetch_spacex_last_launch()
