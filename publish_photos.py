@@ -7,46 +7,24 @@ from dotenv import load_dotenv
 from telegram import Bot
 from telegram.utils.request import Request
 
+from utils import get_image_paths, prepare_photo
+
 
 PROXY_URL = "socks5h://127.0.0.1:10808"
 DEFAULT_DELAY = 4 * 60 * 60
 MAX_FILE_SIZE = 20 * 1024 * 1024
 
-IMAGE_EXTENSIONS = {
-    ".jpg",
-    ".jpeg",
-    ".png",
-}
-
-
-def get_image_paths(directory):
-    image_paths = []
-
-    for filename in os.listdir(directory):
-        filepath = os.path.join(directory, filename)
-
-        if not os.path.isfile(filepath):
-            continue
-
-        _, extension = os.path.splitext(filename)
-
-        if extension.lower() not in IMAGE_EXTENSIONS:
-            continue
-
-        if os.path.getsize(filepath) > MAX_FILE_SIZE:
-            continue
-
-        image_paths.append(filepath)
-
-    return image_paths
-
 
 def publish_photo(bot, channel_id, image_path):
-    with open(image_path, "rb") as photo:
+    photo = prepare_photo(image_path)
+
+    try:
         bot.send_photo(
             chat_id=channel_id,
             photo=photo,
         )
+    finally:
+        photo.close()
 
 
 def main():
@@ -86,7 +64,10 @@ def main():
         request=request,
     )
 
-    image_paths = get_image_paths(args.directory)
+    image_paths = get_image_paths(
+        args.directory,
+        max_file_size=MAX_FILE_SIZE,
+    )
 
     if not image_paths:
         raise RuntimeError("No images found.")
