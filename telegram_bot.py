@@ -9,13 +9,14 @@ from telegram.utils.request import Request
 from utils import get_image_paths, prepare_photo
 
 
-IMAGES_DIRECTORY = "images"
+DEFAULT_IMAGES_DIRECTORY = "images"
+DEFAULT_ENV_FILE = ".env"
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
-def get_random_image():
+def get_random_image(directory):
     image_paths = get_image_paths(
-        IMAGES_DIRECTORY,
+        directory,
         max_file_size=MAX_FILE_SIZE,
     )
 
@@ -26,39 +27,40 @@ def get_random_image():
 
 
 def main():
-    load_dotenv()
-
     parser = argparse.ArgumentParser(
         description="Publish a photo to Telegram channel."
     )
-
     parser.add_argument(
         "image",
         nargs="?",
         help="Path to image. If omitted, a random image is used.",
     )
+    parser.add_argument(
+        "--directory",
+        default=DEFAULT_IMAGES_DIRECTORY,
+        help="Directory for random image selection.",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=DEFAULT_ENV_FILE,
+        help="Path to the environment file.",
+    )
 
     args = parser.parse_args()
-
-    telegram_bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
-    telegram_channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
-    proxy_url = os.getenv("PROXY_URL")
+    load_dotenv(args.env_file)
 
     request = Request(
-        proxy_url=proxy_url,
+        proxy_url=os.getenv("PROXY_URL"),
         connect_timeout=30,
         read_timeout=30,
     )
 
     bot = Bot(
-        token=telegram_bot_token,
+        token=os.environ["TELEGRAM_BOT_TOKEN"],
         request=request,
     )
 
-    if args.image:
-        image_path = args.image
-    else:
-        image_path = get_random_image()
+    image_path = args.image or get_random_image(args.directory)
 
     if os.path.getsize(image_path) > MAX_FILE_SIZE:
         raise RuntimeError("Image is larger than 10 MB.")
@@ -67,7 +69,7 @@ def main():
 
     try:
         bot.send_photo(
-            chat_id=telegram_channel_id,
+            chat_id=os.environ["TELEGRAM_CHANNEL_ID"],
             photo=photo,
         )
     finally:

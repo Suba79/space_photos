@@ -1,3 +1,4 @@
+import argparse
 import os
 from datetime import datetime
 
@@ -8,27 +9,22 @@ from utils import download_image, get_proxies
 
 
 NASA_EPIC_API_URL = "https://api.nasa.gov/EPIC/api/natural"
+DEFAULT_IMAGES_DIRECTORY = "images"
+DEFAULT_ENV_FILE = ".env"
 
 
 def get_epic_images(api_key, proxies=None):
-    params = {
-        "api_key": api_key,
-    }
-
     try:
         response = requests.get(
             NASA_EPIC_API_URL,
-            params=params,
+            params={"api_key": api_key},
             proxies=proxies,
             timeout=30,
         )
         response.raise_for_status()
-
         return response.json(), api_key
-
     except requests.exceptions.RequestException:
         demo_key = "DEMO_KEY"
-
         response = requests.get(
             NASA_EPIC_API_URL,
             params={"api_key": demo_key},
@@ -36,13 +32,11 @@ def get_epic_images(api_key, proxies=None):
             timeout=30,
         )
         response.raise_for_status()
-
         return response.json(), demo_key
 
 
-def fetch_nasa_epic(api_key, images_count=10, proxies=None):
-    os.makedirs("images", exist_ok=True)
-
+def fetch_nasa_epic(api_key, directory, images_count=10, proxies=None):
+    os.makedirs(directory, exist_ok=True)
     epic_images, working_api_key = get_epic_images(
         api_key,
         proxies=proxies,
@@ -53,7 +47,6 @@ def fetch_nasa_epic(api_key, images_count=10, proxies=None):
         start=1,
     ):
         image_name = epic_image["image"]
-
         image_date = datetime.strptime(
             epic_image["date"],
             "%Y-%m-%d %H:%M:%S",
@@ -71,7 +64,10 @@ def fetch_nasa_epic(api_key, images_count=10, proxies=None):
             params={"api_key": working_api_key},
         ).prepare()
 
-        image_path = f"images/nasa_epic_{image_number}.png"
+        image_path = os.path.join(
+            directory,
+            f"nasa_epic_{image_number}.png",
+        )
 
         download_image(
             prepared_request.url,
@@ -81,14 +77,27 @@ def fetch_nasa_epic(api_key, images_count=10, proxies=None):
 
 
 def main():
-    load_dotenv()
+    parser = argparse.ArgumentParser(
+        description="Download NASA EPIC images."
+    )
+    parser.add_argument(
+        "--directory",
+        default=DEFAULT_IMAGES_DIRECTORY,
+        help="Directory for downloaded images.",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=DEFAULT_ENV_FILE,
+        help="Path to the environment file.",
+    )
 
-    nasa_api_key = os.environ["NASA_API_KEY"]
-    proxies = get_proxies()
+    args = parser.parse_args()
+    load_dotenv(args.env_file)
 
     fetch_nasa_epic(
-        nasa_api_key,
-        proxies=proxies,
+        os.environ["NASA_API_KEY"],
+        directory=args.directory,
+        proxies=get_proxies(),
     )
 
 

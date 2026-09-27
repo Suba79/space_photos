@@ -10,6 +10,8 @@ from telegram.utils.request import Request
 from utils import get_image_paths, prepare_photo
 
 
+DEFAULT_IMAGES_DIRECTORY = "images"
+DEFAULT_ENV_FILE = ".env"
 DEFAULT_DELAY = 4 * 60 * 60
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -27,40 +29,35 @@ def publish_photo(bot, channel_id, image_path):
 
 
 def main():
-    load_dotenv()
-
     parser = argparse.ArgumentParser(
         description="Publish photos to Telegram channel."
     )
-
     parser.add_argument(
-        "directory",
-        nargs="?",
-        default="images",
+        "--directory",
+        default=DEFAULT_IMAGES_DIRECTORY,
         help="Directory with photos.",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=DEFAULT_ENV_FILE,
+        help="Path to the environment file.",
     )
 
     args = parser.parse_args()
-
-    telegram_bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
-    telegram_channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
-    proxy_url = os.getenv("PROXY_URL")
+    load_dotenv(args.env_file)
 
     publish_delay = int(
-        os.getenv(
-            "PUBLISH_DELAY",
-            DEFAULT_DELAY,
-        )
+        os.getenv("PUBLISH_DELAY", DEFAULT_DELAY)
     )
 
     request = Request(
-        proxy_url=proxy_url,
+        proxy_url=os.getenv("PROXY_URL"),
         connect_timeout=30,
         read_timeout=30,
     )
 
     bot = Bot(
-        token=telegram_bot_token,
+        token=os.environ["TELEGRAM_BOT_TOKEN"],
         request=request,
     )
 
@@ -78,10 +75,9 @@ def main():
         for image_path in image_paths:
             publish_photo(
                 bot,
-                telegram_channel_id,
+                os.environ["TELEGRAM_CHANNEL_ID"],
                 image_path,
             )
-
             time.sleep(publish_delay)
 
 
