@@ -201,12 +201,12 @@ python fetch_nasa_epic.py
 Например:
 
 ```bash
-python telegram_bot.py images/spacex1.jpg
+python telegram_bot.py images/spacex2.jpg
 ```
 
 Как проверить результат:
 
-- именно файл `images/spacex1.jpg` появился в Telegram-канале.
+- именно файл `images/spacex2.jpg` появился в Telegram-канале.
 
 Если изображение слишком большое по разрешению для Telegram, скрипт уменьшает копию изображения в памяти. Оригинальный файл в `images` не изменяется.
 

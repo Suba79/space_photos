@@ -11,7 +11,7 @@ from utils import get_image_paths, prepare_photo
 
 
 DEFAULT_DELAY = 4 * 60 * 60
-MAX_FILE_SIZE = 20 * 1024 * 1024
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
 def publish_photo(bot, channel_id, image_path):
