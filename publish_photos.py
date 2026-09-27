@@ -5,6 +5,7 @@ import time
 
 from dotenv import load_dotenv
 from telegram import Bot
+from telegram.error import NetworkError
 from telegram.utils.request import Request
 
 from utils import get_image_paths, prepare_photo
@@ -13,6 +14,7 @@ from utils import get_image_paths, prepare_photo
 DEFAULT_IMAGES_DIRECTORY = "images"
 DEFAULT_ENV_FILE = ".env"
 DEFAULT_DELAY = 4 * 60 * 60
+RETRY_DELAY = 5
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
@@ -61,6 +63,8 @@ def main():
         request=request,
     )
 
+    channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
+
     image_paths = get_image_paths(
         args.directory,
         max_file_size=MAX_FILE_SIZE,
@@ -73,11 +77,17 @@ def main():
         random.shuffle(image_paths)
 
         for image_path in image_paths:
-            publish_photo(
-                bot,
-                os.environ["TELEGRAM_CHANNEL_ID"],
-                image_path,
-            )
+            while True:
+                try:
+                    publish_photo(
+                        bot,
+                        channel_id,
+                        image_path,
+                    )
+                    break
+                except NetworkError:
+                    time.sleep(RETRY_DELAY)
+
             time.sleep(publish_delay)
 
 
