@@ -14,30 +14,26 @@ DEFAULT_ENV_FILE = ".env"
 
 
 def get_epic_images(api_key, proxies=None):
-    try:
-        response = requests.get(
-            NASA_EPIC_API_URL,
-            params={"api_key": api_key},
-            proxies=proxies,
-            timeout=30,
-        )
-        response.raise_for_status()
-        return response.json(), api_key
-    except requests.exceptions.RequestException:
-        demo_key = "DEMO_KEY"
-        response = requests.get(
-            NASA_EPIC_API_URL,
-            params={"api_key": demo_key},
-            proxies=proxies,
-            timeout=30,
-        )
-        response.raise_for_status()
-        return response.json(), demo_key
+    response = requests.get(
+        NASA_EPIC_API_URL,
+        params={"api_key": api_key},
+        proxies=proxies,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    return response.json()
 
 
-def fetch_nasa_epic(api_key, directory, images_count=10, proxies=None):
+def fetch_nasa_epic(
+    api_key,
+    directory,
+    images_count=10,
+    proxies=None,
+):
     os.makedirs(directory, exist_ok=True)
-    epic_images, working_api_key = get_epic_images(
+
+    epic_images = get_epic_images(
         api_key,
         proxies=proxies,
     )
@@ -61,7 +57,7 @@ def fetch_nasa_epic(api_key, directory, images_count=10, proxies=None):
         prepared_request = requests.Request(
             "GET",
             image_url,
-            params={"api_key": working_api_key},
+            params={"api_key": api_key},
         ).prepare()
 
         image_path = os.path.join(

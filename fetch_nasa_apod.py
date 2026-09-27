@@ -13,34 +13,33 @@ DEFAULT_ENV_FILE = ".env"
 
 
 def get_apod_images(api_key, count, proxies=None):
-    params = {"api_key": api_key, "count": count}
-
-    try:
-        response = requests.get(
-            NASA_APOD_URL,
-            params=params,
-            proxies=proxies,
-            timeout=30,
-        )
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
-        response = requests.get(
-            NASA_APOD_URL,
-            params={"api_key": "DEMO_KEY", "count": 1},
-            proxies=proxies,
-            timeout=30,
-        )
-        response.raise_for_status()
+    response = requests.get(
+        NASA_APOD_URL,
+        params={
+            "api_key": api_key,
+            "count": count,
+        },
+        proxies=proxies,
+        timeout=30,
+    )
+    response.raise_for_status()
 
     apod_images = response.json()
+
     if isinstance(apod_images, dict):
         apod_images = [apod_images]
+
     return apod_images
 
 
 def fetch_nasa_apod(api_key, directory, count=40, proxies=None):
     os.makedirs(directory, exist_ok=True)
-    apod_images = get_apod_images(api_key, count, proxies=proxies)
+
+    apod_images = get_apod_images(
+        api_key,
+        count,
+        proxies=proxies,
+    )
 
     image_number = 1
 
@@ -50,15 +49,17 @@ def fetch_nasa_apod(api_key, directory, count=40, proxies=None):
 
         image_url = apod_image["url"]
         extension = get_file_extension(image_url)
+
         image_path = os.path.join(
             directory,
             f"nasa_apod_{image_number}{extension}",
         )
 
-        try:
-            download_image(image_url, image_path, proxies=proxies)
-        except requests.exceptions.RequestException:
-            continue
+        download_image(
+            image_url,
+            image_path,
+            proxies=proxies,
+        )
 
         image_number += 1
 
