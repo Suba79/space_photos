@@ -10,7 +10,7 @@ from utils import get_image_paths, prepare_photo
 
 
 IMAGES_DIRECTORY = "images"
-MAX_FILE_SIZE = 20 * 1024 * 1024
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
 def get_random_image():
@@ -61,7 +61,7 @@ def main():
         image_path = get_random_image()
 
     if os.path.getsize(image_path) > MAX_FILE_SIZE:
-        raise RuntimeError("Image is larger than 20 MB.")
+        raise RuntimeError("Image is larger than 10 MB.")
 
     photo = prepare_photo(image_path)
 
