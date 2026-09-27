@@ -3,14 +3,10 @@ import os
 import time
 
 import requests
+from dotenv import load_dotenv
 
-from utils import download_image
+from utils import download_image, get_proxies
 
-
-PROXIES = {
-    "http": "socks5h://127.0.0.1:10808",
-    "https": "socks5h://127.0.0.1:10808",
-}
 
 USER_AGENT = "space-photos-training-project/1.0"
 WIKIMEDIA_API_URL = "https://commons.wikimedia.org/w/api.php"
@@ -18,7 +14,7 @@ WIKIMEDIA_API_URL = "https://commons.wikimedia.org/w/api.php"
 DEFAULT_SEARCH_QUERY = "Starlink 17-38"
 
 
-def fetch_spacex_images(search_query):
+def fetch_spacex_images(search_query, proxies=None):
     os.makedirs("images", exist_ok=True)
 
     params = {
@@ -39,7 +35,7 @@ def fetch_spacex_images(search_query):
     response = requests.get(
         WIKIMEDIA_API_URL,
         params=params,
-        proxies=PROXIES,
+        proxies=proxies,
         headers=headers,
         timeout=30,
     )
@@ -61,13 +57,15 @@ def fetch_spacex_images(search_query):
         download_image(
             image_url,
             image_path,
-            proxies=PROXIES,
+            proxies=proxies,
         )
 
         time.sleep(5)
 
 
 def main():
+    load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="Download SpaceX launch images from Wikimedia Commons."
     )
@@ -81,7 +79,12 @@ def main():
 
     args = parser.parse_args()
 
-    fetch_spacex_images(args.search_query)
+    proxies = get_proxies()
+
+    fetch_spacex_images(
+        args.search_query,
+        proxies=proxies,
+    )
 
 
 if __name__ == "__main__":

@@ -3,18 +3,13 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from utils import download_image, get_file_extension
+from utils import download_image, get_file_extension, get_proxies
 
-
-PROXIES = {
-    "http": "socks5h://127.0.0.1:10808",
-    "https": "socks5h://127.0.0.1:10808",
-}
 
 NASA_APOD_URL = "https://api.nasa.gov/planetary/apod"
 
 
-def get_apod_images(api_key, count):
+def get_apod_images(api_key, count, proxies=None):
     params = {
         "api_key": api_key,
         "count": count,
@@ -24,7 +19,7 @@ def get_apod_images(api_key, count):
         response = requests.get(
             NASA_APOD_URL,
             params=params,
-            proxies=PROXIES,
+            proxies=proxies,
             timeout=30,
         )
         response.raise_for_status()
@@ -38,7 +33,7 @@ def get_apod_images(api_key, count):
         response = requests.get(
             NASA_APOD_URL,
             params=fallback_params,
-            proxies=PROXIES,
+            proxies=proxies,
             timeout=30,
         )
         response.raise_for_status()
@@ -51,10 +46,14 @@ def get_apod_images(api_key, count):
     return apod_images
 
 
-def fetch_nasa_apod(api_key, count=40):
+def fetch_nasa_apod(api_key, count=40, proxies=None):
     os.makedirs("images", exist_ok=True)
 
-    apod_images = get_apod_images(api_key, count)
+    apod_images = get_apod_images(
+        api_key,
+        count,
+        proxies=proxies,
+    )
 
     image_number = 1
 
@@ -71,7 +70,7 @@ def fetch_nasa_apod(api_key, count=40):
             download_image(
                 image_url,
                 image_path,
-                proxies=PROXIES,
+                proxies=proxies,
             )
         except requests.exceptions.RequestException:
             continue
@@ -83,8 +82,12 @@ def main():
     load_dotenv()
 
     nasa_api_key = os.environ["NASA_API_KEY"]
+    proxies = get_proxies()
 
-    fetch_nasa_apod(nasa_api_key)
+    fetch_nasa_apod(
+        nasa_api_key,
+        proxies=proxies,
+    )
 
 
 if __name__ == "__main__":

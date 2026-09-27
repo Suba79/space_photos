@@ -1,3 +1,4 @@
+import time
 import io
 import os
 from urllib.parse import unquote, urlsplit
@@ -17,21 +18,43 @@ IMAGE_EXTENSIONS = {
 MAX_DIMENSIONS_SUM = 9900
 
 
+def get_proxies():
+    proxy_url = os.getenv("PROXY_URL")
+
+    if not proxy_url:
+        return None
+
+    return {
+        "http": proxy_url,
+        "https": proxy_url,
+    }
+
+
 def download_image(url, filepath, proxies=None):
     headers = {
         "User-Agent": USER_AGENT,
     }
 
-    response = requests.get(
-        url,
-        proxies=proxies,
-        headers=headers,
-        timeout=30,
-    )
-    response.raise_for_status()
+    for attempt in range(3):
+        response = requests.get(
+            url,
+            proxies=proxies,
+            headers=headers,
+            timeout=30,
+        )
 
-    with open(filepath, "wb") as file:
-        file.write(response.content)
+        if response.status_code == 429:
+            time.sleep(15 * (attempt + 1))
+            continue
+
+        response.raise_for_status()
+
+        with open(filepath, "wb") as file:
+            file.write(response.content)
+
+        return
+
+    response.raise_for_status()
 
 
 def get_file_extension(url):

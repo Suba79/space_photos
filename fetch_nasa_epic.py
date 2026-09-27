@@ -4,18 +4,13 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-from utils import download_image
+from utils import download_image, get_proxies
 
-
-PROXIES = {
-    "http": "socks5h://127.0.0.1:10808",
-    "https": "socks5h://127.0.0.1:10808",
-}
 
 NASA_EPIC_API_URL = "https://api.nasa.gov/EPIC/api/natural"
 
 
-def get_epic_images(api_key):
+def get_epic_images(api_key, proxies=None):
     params = {
         "api_key": api_key,
     }
@@ -24,7 +19,7 @@ def get_epic_images(api_key):
         response = requests.get(
             NASA_EPIC_API_URL,
             params=params,
-            proxies=PROXIES,
+            proxies=proxies,
             timeout=30,
         )
         response.raise_for_status()
@@ -37,7 +32,7 @@ def get_epic_images(api_key):
         response = requests.get(
             NASA_EPIC_API_URL,
             params={"api_key": demo_key},
-            proxies=PROXIES,
+            proxies=proxies,
             timeout=30,
         )
         response.raise_for_status()
@@ -45,10 +40,13 @@ def get_epic_images(api_key):
         return response.json(), demo_key
 
 
-def fetch_nasa_epic(api_key, images_count=10):
+def fetch_nasa_epic(api_key, images_count=10, proxies=None):
     os.makedirs("images", exist_ok=True)
 
-    epic_images, working_api_key = get_epic_images(api_key)
+    epic_images, working_api_key = get_epic_images(
+        api_key,
+        proxies=proxies,
+    )
 
     for image_number, epic_image in enumerate(
         epic_images[:images_count],
@@ -78,7 +76,7 @@ def fetch_nasa_epic(api_key, images_count=10):
         download_image(
             prepared_request.url,
             image_path,
-            proxies=PROXIES,
+            proxies=proxies,
         )
 
 
@@ -86,8 +84,12 @@ def main():
     load_dotenv()
 
     nasa_api_key = os.environ["NASA_API_KEY"]
+    proxies = get_proxies()
 
-    fetch_nasa_epic(nasa_api_key)
+    fetch_nasa_epic(
+        nasa_api_key,
+        proxies=proxies,
+    )
 
 
 if __name__ == "__main__":

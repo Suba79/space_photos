@@ -10,7 +10,6 @@ from telegram.utils.request import Request
 from utils import get_image_paths, prepare_photo
 
 
-PROXY_URL = "socks5h://127.0.0.1:10808"
 DEFAULT_DELAY = 4 * 60 * 60
 MAX_FILE_SIZE = 20 * 1024 * 1024
 
@@ -45,6 +44,7 @@ def main():
 
     telegram_bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
     telegram_channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
+    proxy_url = os.getenv("PROXY_URL")
 
     publish_delay = int(
         os.getenv(
@@ -54,7 +54,7 @@ def main():
     )
 
     request = Request(
-        proxy_url=PROXY_URL,
+        proxy_url=proxy_url,
         connect_timeout=30,
         read_timeout=30,
     )
