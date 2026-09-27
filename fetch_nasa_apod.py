@@ -41,13 +41,16 @@ def fetch_nasa_apod(api_key, directory, count=40, proxies=None):
         proxies=proxies,
     )
 
-    image_number = 1
+    image_urls = [
+        apod_image["url"]
+        for apod_image in apod_images
+        if apod_image.get("media_type") == "image"
+    ]
 
-    for apod_image in apod_images:
-        if apod_image.get("media_type") != "image":
-            continue
-
-        image_url = apod_image["url"]
+    for image_number, image_url in enumerate(
+        image_urls,
+        start=1,
+    ):
         extension = get_file_extension(image_url)
 
         image_path = os.path.join(
@@ -60,8 +63,6 @@ def fetch_nasa_apod(api_key, directory, count=40, proxies=None):
             image_path,
             proxies=proxies,
         )
-
-        image_number += 1
 
 
 def main():
